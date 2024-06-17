@@ -17,7 +17,7 @@ routes.post("/create", verifyToken, createProduct);
 // //
 routes.put("/update/:id", verifyToken, UpdateProduct);
 routes.delete("/delete/:id", verifyToken, DelletProductDeatils);
-routes.get("/product/:id", verifyToken, ProductDeatils);
-routes.get("/all", verifyToken, AllProductDetails);
+routes.get("/product/:id", ProductDeatils);
+routes.get("/all", AllProductDetails);
 
 module.exports = routes;

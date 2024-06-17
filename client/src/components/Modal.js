@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
@@ -6,12 +6,7 @@ import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
 import axios from "axios";
 
-const token = {
-  headers: {
-    Authorization: `Barer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2Njk2OTA2OTlkN2E4YzNmNjQwZjQ3OSIsImlhdCI6MTcxODE4NDc4NX0.hy2kGh73KNYPY_QxaVt0oKdPXUeKUezqmv2YpvcW-gg`,
-  },
-};
-function Modals({ lgShow, handleClose }) {
+function Modals({ lgShow, handleClose, updateDate, clearUpdataDAta }) {
   const [data, setData] = useState({
     name: "",
     price: "",
@@ -19,6 +14,19 @@ function Modals({ lgShow, handleClose }) {
     brand: "",
     image: "",
   });
+
+  useEffect(() => {
+    // Ensure updateDate is defined before setting state
+    if (updateDate) {
+      setData({
+        name: updateDate.name,
+        brand: updateDate.brand,
+        des: updateDate.des,
+        image: updateDate.image,
+        price: updateDate.price,
+      });
+    }
+  }, [updateDate]);
 
   const [resData, setResData] = useState({ status: "", message: "" });
   const [validated, setValidated] = useState(false);
@@ -36,8 +44,10 @@ function Modals({ lgShow, handleClose }) {
     handleClose();
     setValidated(false);
     setShowAlert(false);
+    updateDate && clearUpdataDAta();
   };
 
+  const token = localStorage.getItem("token");
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidated(true);
@@ -53,7 +63,9 @@ function Modals({ lgShow, handleClose }) {
 
     try {
       await axios
-        .post("http://localhost:8000/api/task/create", data, token)
+        .post("http://localhost:8000/api/task/create", data, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((res) => {
           if (res.status === 201) {
             setResData({
@@ -61,6 +73,47 @@ function Modals({ lgShow, handleClose }) {
               message: "Product Created successfully",
             });
 
+            setTimeout(() => {
+              setLoading(false);
+              clearData();
+            }, 1000);
+          }
+        });
+    } catch (error) {
+      console.log(error);
+      console.log(token);
+      setLoading(false);
+      setResData({
+        status: 500,
+        message: "Something went wrong",
+      });
+    }
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setValidated(true);
+
+    const form = e.currentTarget;
+    if (form.checkValidity() === false) {
+      e.stopPropagation();
+      setShowAlert(true);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await axios
+        .put(`http://localhost:8000/api/task/update/${updateDate._id}`, data, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          if (res.status === 200) {
+            setResData({
+              status: 201,
+              message: "Product Updated successfully",
+            });
             setTimeout(() => {
               setLoading(false);
               clearData();
@@ -90,7 +143,7 @@ function Modals({ lgShow, handleClose }) {
       >
         <Modal.Header closeButton>
           <Modal.Title id="example-modal-sizes-title-lg">
-            Create List
+            {updateDate ? "Update Product" : "Create Product"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -186,9 +239,15 @@ function Modals({ lgShow, handleClose }) {
                 Product image link is required.
               </Form.Control.Feedback>
             </Form.Group>
-            <Button type="submit" disabled={loading}>
-              {loading ? <Spinner animation="border" size="sm" /> : "Submit"}
-            </Button>
+            {updateDate ? (
+              <Button onClick={(e) => handleUpdate(e)} disabled={loading}>
+                {loading ? <Spinner animation="border" size="sm" /> : "Update"}
+              </Button>
+            ) : (
+              <Button type="submit" disabled={loading}>
+                {loading ? <Spinner animation="border" size="sm" /> : "Create"}
+              </Button>
+            )}
           </Form>
         </Modal.Body>
       </Modal>

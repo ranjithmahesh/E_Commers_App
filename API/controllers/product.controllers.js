@@ -9,6 +9,7 @@ module.exports.createProduct = async (req, res) => {
   createProduct.des = req.body.des;
   createProduct.brand = req.body.brand;
   createProduct.image = req.body.image;
+  createProduct.user = req.user.id;
 
   const newProduct = product(createProduct);
   await newProduct.save();
@@ -70,7 +71,8 @@ module.exports.AllProductDetails = async (req, res) => {
     const allProductDetails = await product
       .find()
       .skip((pageNumber - 1) * limitNumber)
-      .limit(limitNumber);
+      .limit(limitNumber)
+      .sort({ createdAt: -1 });
 
     const productCount = await product.countDocuments();
 
